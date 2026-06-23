@@ -1,0 +1,70 @@
+<div class="pd-root">
+  <button class="pd-back" (click)="back.emit()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to products
+  </button>
+
+  <div class="pd-layout">
+    <div class="pd-image-panel">
+      <div class="pd-img-wrap">
+        <img [src]="product().image" [alt]="product().name" class="pd-img" />
+        @if (product().badge) {
+          <span class="pd-badge badge-{{ product().badge!.toLowerCase().replace(' ', '-') }}">{{ product().badge }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="pd-info-panel">
+      <span class="pd-category">{{ product().category }}</span>
+      <h1 class="pd-name">{{ product().name }}</h1>
+
+      <div class="pd-rating">
+        <span class="stars">
+          @for (s of stars(product().rating); track $index) {
+            <span class="star star-{{ s }}">★</span>
+          }
+        </span>
+        <span class="pd-rating-num">{{ product().rating }}</span>
+        <span class="pd-rating-reviews">{{ product().reviews | number }} reviews</span>
+      </div>
+
+      <div class="pd-price-block">
+        <div class="pd-prices">
+          <span class="pd-price-now">${{ product().price }}</span>
+          <span class="pd-price-was">${{ product().originalPrice }}</span>
+          <span class="pd-discount-pill">-{{ discount(product()) }}% OFF</span>
+        </div>
+        <p class="pd-savings">You save ${{ product().originalPrice - product().price }}</p>
+      </div>
+
+      <p class="pd-description">{{ product().description }}</p>
+
+      <div class="pd-specs">
+        <h3 class="pd-specs-title">Key specs</h3>
+        <div class="pd-specs-grid">
+          @for (spec of product().specs; track $index) {
+            <div class="pd-spec-chip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ spec }}
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="pd-actions">
+        @if (cartService.isInCart(product().id)) {
+          <div class="pd-in-cart-info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            In your cart — {{ cartService.getQuantity(product().id) }} unit(s)
+          </div>
+          <button class="btn-add-more" (click)="addToCart()">Add one more</button>
+        } @else {
+          <button class="btn-add-to-cart" (click)="addToCart()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Add to Cart
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

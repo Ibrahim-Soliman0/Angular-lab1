@@ -1,0 +1,52 @@
+<section class="pl-root">
+  <div class="pl-header">
+    <h1 class="pl-title">Products</h1>
+    <p class="pl-sub">{{ cartService.products.length }} items</p>
+  </div>
+
+  <div class="pl-grid">
+    @for (product of cartService.products; track product.id) {
+      <article class="card" (click)="openProduct.emit(product)">
+        <div class="card-img-wrap">
+          <img [src]="product.image" [alt]="product.name" class="card-img" loading="lazy" />
+          @if (product.badge) {
+            <span class="card-badge" [class]="'badge-' + product.badge.toLowerCase().replace(' ', '-')">
+              {{ product.badge }}
+            </span>
+          }
+          <span class="card-discount">-{{ discount(product) }}%</span>
+        </div>
+
+        <div class="card-body">
+          <span class="card-category">{{ product.category }}</span>
+          <h2 class="card-name">{{ product.name }}</h2>
+
+          <div class="card-rating">
+            <span class="stars">
+              @for (s of stars(product.rating); track $index) {
+                <span class="star" [class]="'star-' + s">★</span>
+              }
+            </span>
+            <span class="rating-num">{{ product.rating }}</span>
+            <span class="rating-reviews">({{ product.reviews | number }})</span>
+          </div>
+
+          <div class="card-footer">
+            <div class="card-pricing">
+              <span class="price-now">${{ product.price }}</span>
+              <span class="price-was">${{ product.originalPrice }}</span>
+            </div>
+            @if (cartService.isInCart(product.id)) {
+              <button class="btn-in-cart" (click)="addToCart($event, product)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                In Cart ({{ cartService.getQuantity(product.id) }})
+              </button>
+            } @else {
+              <button class="btn-add" (click)="addToCart($event, product)">Add to Cart</button>
+            }
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>

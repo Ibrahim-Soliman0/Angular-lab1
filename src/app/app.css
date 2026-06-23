@@ -1,0 +1,81 @@
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.top-bar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: 'Space Grotesk', sans-serif;
+  flex-shrink: 0;
+}
+
+.brand-mark { color: var(--accent); font-size: 18px; }
+.brand-name { font-weight: 700; font-size: 17px; letter-spacing: .04em; }
+.brand-sub { font-size: 13px; color: var(--ink-mute); font-weight: 400; }
+
+.top-nav { flex: 1; }
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: color .15s, background .15s;
+}
+.nav-link:hover { color: var(--ink); background: var(--line-soft); }
+
+.cart-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  transition: background .15s;
+}
+.cart-btn:hover { background: var(--ink-soft); }
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--accent);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
