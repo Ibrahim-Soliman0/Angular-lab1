@@ -1,6 +1,7 @@
-import { Component, output } from '@angular/core';
+import { Component, output, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { CartService, CartItem } from '../../services/cart';
+import { ProductCartService } from '../../services/product-cart';
+import { CartItem } from '../../models/product.model';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -9,38 +10,20 @@ import { CartService, CartItem } from '../../services/cart';
   styleUrl: './shopping-cart.css'
 })
 export class ShoppingCartComponent {
+  // Signal-based output
   close = output<void>();
 
-  constructor(public cartService: CartService) {}
+  cartService = inject(ProductCartService);
 
-  onQuantityChange(item: CartItem, value: string) {
-    const n = parseInt(value, 10);
-    if (!isNaN(n)) {
-      this.cartService.updateQuantity(item.product.id, n);
-    }
-  }
-
-  increment(item: CartItem) {
+  increment(item: CartItem): void {
     this.cartService.updateQuantity(item.product.id, item.quantity + 1);
   }
 
-  decrement(item: CartItem) {
+  decrement(item: CartItem): void {
     this.cartService.updateQuantity(item.product.id, item.quantity - 1);
   }
 
-  remove(item: CartItem) {
+  remove(item: CartItem): void {
     this.cartService.removeFromCart(item.product.id);
-  }
-
-  itemTotal(item: CartItem) {
-    return item.product.price * item.quantity;
-  }
-
-  itemOriginalTotal(item: CartItem) {
-    return item.product.originalPrice * item.quantity;
-  }
-
-  itemDiscount(item: CartItem) {
-    return Math.round((1 - item.product.price / item.product.originalPrice) * 100);
   }
 }

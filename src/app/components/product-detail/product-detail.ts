@@ -1,6 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { CartService, Product } from '../../services/cart';
+import { ProductCartService } from '../../services/product-cart';
+import { Product } from '../../models/product.model';
 
 @Component({
   selector: 'app-product-detail',
@@ -9,20 +10,23 @@ import { CartService, Product } from '../../services/cart';
   styleUrl: './product-detail.css'
 })
 export class ProductDetailComponent {
+  // Signal-based input & output (Angular 17+)
   product = input.required<Product>();
-  back = output<void>();
+  back    = output<void>();
 
-  constructor(public cartService: CartService) {}
+  cartService = inject(ProductCartService);
 
-  addToCart() {
+  addToCart(): void {
     this.cartService.addToCart(this.product());
   }
 
-  discount(p: Product) {
+  discount(p: Product): number {
     return Math.round((1 - p.price / p.originalPrice) * 100);
   }
 
-  stars(rating: number) {
-    return Array.from({ length: 5 }, (_, i) => i < Math.floor(rating) ? 'full' : i < rating ? 'half' : 'empty');
+  stars(rating: number): string[] {
+    return Array.from({ length: 5 }, (_, i) =>
+      i < Math.floor(rating) ? 'full' : i < rating ? 'half' : 'empty'
+    );
   }
 }

@@ -149,3 +149,16 @@
   gap: 6px;
   border: 1px solid #bbf7d0;
 }
+
+/* ── Skeleton loading ──────────────────────────────────────────────── */
+.skeleton-card { pointer-events: none; }
+.skel {
+  background: linear-gradient(90deg, var(--line-soft) 25%, var(--line) 50%, var(--line-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+.skel-img { width: 100%; aspect-ratio: 4/3; border-radius: 0; }
+.skel-line { height: 13px; }
+@keyframes shimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+.pl-loading-text { color: var(--ink-mute); font-size: 14px; }

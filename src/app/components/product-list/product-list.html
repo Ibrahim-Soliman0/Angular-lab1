@@ -1,52 +1,76 @@
 <section class="pl-root">
   <div class="pl-header">
     <h1 class="pl-title">Products</h1>
-    <p class="pl-sub">{{ cartService.products.length }} items</p>
-  </div>
-
-  <div class="pl-grid">
-    @for (product of cartService.products; track product.id) {
-      <article class="card" (click)="openProduct.emit(product)">
-        <div class="card-img-wrap">
-          <img [src]="product.image" [alt]="product.name" class="card-img" loading="lazy" />
-          @if (product.badge) {
-            <span class="card-badge" [class]="'badge-' + product.badge.toLowerCase().replace(' ', '-')">
-              {{ product.badge }}
-            </span>
-          }
-          <span class="card-discount">-{{ discount(product) }}%</span>
-        </div>
-
-        <div class="card-body">
-          <span class="card-category">{{ product.category }}</span>
-          <h2 class="card-name">{{ product.name }}</h2>
-
-          <div class="card-rating">
-            <span class="stars">
-              @for (s of stars(product.rating); track $index) {
-                <span class="star" [class]="'star-' + s">★</span>
-              }
-            </span>
-            <span class="rating-num">{{ product.rating }}</span>
-            <span class="rating-reviews">({{ product.reviews | number }})</span>
-          </div>
-
-          <div class="card-footer">
-            <div class="card-pricing">
-              <span class="price-now">${{ product.price }}</span>
-              <span class="price-was">${{ product.originalPrice }}</span>
-            </div>
-            @if (cartService.isInCart(product.id)) {
-              <button class="btn-in-cart" (click)="addToCart($event, product)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                In Cart ({{ cartService.getQuantity(product.id) }})
-              </button>
-            } @else {
-              <button class="btn-add" (click)="addToCart($event, product)">Add to Cart</button>
-            }
-          </div>
-        </div>
-      </article>
+    @if (productService.loading()) {
+      <span class="pl-sub pl-loading-text">Loading...</span>
+    } @else {
+      <p class="pl-sub">{{ productService.products().length }} items</p>
     }
   </div>
+
+  @if (productService.loading()) {
+    <!-- Skeleton grid while products load -->
+    <div class="pl-grid">
+      @for (s of skeletons; track s) {
+        <div class="card skeleton-card">
+          <div class="skel skel-img"></div>
+          <div class="card-body" style="gap:10px">
+            <div class="skel skel-line" style="width:40%;height:11px"></div>
+            <div class="skel skel-line" style="width:75%;height:16px"></div>
+            <div class="skel skel-line" style="width:55%;height:11px"></div>
+            <div class="skel skel-line" style="width:90%;height:36px;margin-top:8px"></div>
+          </div>
+        </div>
+      }
+    </div>
+
+  } @else {
+    <div class="pl-grid">
+      @for (product of productService.products(); track product.id) {
+        <article class="card" (click)="openProduct.emit(product)">
+
+          <div class="card-img-wrap">
+            <img [src]="product.image" [alt]="product.name" class="card-img" loading="lazy" />
+            @if (product.badge) {
+              <span class="card-badge badge-{{ product.badge.toLowerCase().replace(' ', '-') }}">
+                {{ product.badge }}
+              </span>
+            }
+            <span class="card-discount">-{{ discount(product) }}%</span>
+          </div>
+
+          <div class="card-body">
+            <span class="card-category">{{ product.category }}</span>
+            <h2 class="card-name">{{ product.name }}</h2>
+
+            <div class="card-rating">
+              <span class="stars">
+                @for (s of stars(product.rating); track $index) {
+                  <span class="star star-{{ s }}">★</span>
+                }
+              </span>
+              <span class="rating-num">{{ product.rating }}</span>
+              <span class="rating-reviews">({{ product.reviews | number }})</span>
+            </div>
+
+            <div class="card-footer">
+              <div class="card-pricing">
+                <span class="price-now">${{ product.price }}</span>
+                <span class="price-was">${{ product.originalPrice }}</span>
+              </div>
+              @if (cartService.isInCart(product.id)) {
+                <button class="btn-in-cart" (click)="addToCart($event, product)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  In Cart ({{ cartService.getQuantity(product.id) }})
+                </button>
+              } @else {
+                <button class="btn-add" (click)="addToCart($event, product)">Add to Cart</button>
+              }
+            </div>
+          </div>
+
+        </article>
+      }
+    </div>
+  }
 </section>
