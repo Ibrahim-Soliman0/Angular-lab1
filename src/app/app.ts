@@ -1,37 +1,33 @@
-import { Component, signal, inject } from '@angular/core';
-import { ProductListComponent } from './components/product-list/product-list';
-import { ProductDetailComponent } from './components/product-detail/product-detail';
-import { ShoppingCartComponent } from './components/shopping-cart/shopping-cart';
-import { Product } from './models/product.model';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterOutlet, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
+import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner';
 import { ProductCartService } from './services/product-cart';
 
 @Component({
   selector: 'app-root',
-  imports: [ProductListComponent, ProductDetailComponent, ShoppingCartComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LoadingSpinnerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  cartService = inject(ProductCartService);
+  cartService    = inject(ProductCartService);
+  private router = inject(Router);
 
-  // Signal-based navigation state
-  selectedProduct = signal<Product | null>(null);
-  cartOpen        = signal(false);
+  /** True while a resolver is fetching — shows the loading overlay */
+  navigating = signal(false);
 
-  // Expose cart count signal directly from the service
-  itemCount = this.cartService.itemCount;
-
-  openDetail(product: Product): void {
-    this.selectedProduct.set(product);
-    this.cartOpen.set(false);
-  }
-
-  closeDetail(): void {
-    this.selectedProduct.set(null);
-  }
-
-  toggleCart(): void {
-    this.cartOpen.update(v => !v);
-    this.selectedProduct.set(null);
+  constructor() {
+    // Track router events so we can show the spinner during resolver execution
+    this.router.events.pipe(
+      filter(e =>
+        e instanceof NavigationStart ||
+        e instanceof NavigationEnd ||
+        e instanceof NavigationCancel ||
+        e instanceof NavigationError
+      )
+    ).subscribe(e => {
+      this.navigating.set(e instanceof NavigationStart);
+    });
   }
 }

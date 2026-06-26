@@ -1,0 +1,179 @@
+<div class="ae-page">
+
+  <nav class="ae-breadcrumb">
+    <a routerLink="/products" class="bc-link">Products</a>
+    <span class="bc-sep">›</span>
+    @if (isEdit()) {
+      <a [routerLink]="['/products', editProduct()!.id]" class="bc-link">{{ editProduct()!.name }}</a>
+      <span class="bc-sep">›</span>
+      <span class="bc-current">Edit</span>
+    } @else {
+      <span class="bc-current">Add New Product</span>
+    }
+  </nav>
+
+  <!-- Success banner -->
+  @if (saved()) {
+    <div class="save-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Product {{ isEdit() ? 'updated' : 'created' }} successfully! Redirecting…
+    </div>
+  }
+
+  <div class="ae-layout">
+    <!-- ── Form ──────────────────────────────────────────────────────── -->
+    <div class="ae-form-panel">
+      <h1 class="ae-title">{{ isEdit() ? 'Edit Product' : 'Add New Product' }}</h1>
+
+      <form class="ae-form" (ngSubmit)="submit()">
+
+        <!-- Name -->
+        <div class="field" [ngClass]="{ 'field-error': touched() && !form.name }">
+          <label class="field-label" for="f-name">Product Name <span class="req">*</span></label>
+          <input id="f-name" type="text" class="field-input" [(ngModel)]="form.name" name="name"
+            [attr.placeholder]="'e.g. Sony WH-1000XM5'"
+            [attr.aria-required]="true" />
+          @if (touched() && !form.name) {
+            <span class="field-msg">Name is required</span>
+          }
+        </div>
+
+        <!-- Price row -->
+        <div class="field-row">
+          <div class="field" [ngClass]="{ 'field-error': touched() && !form.price }">
+            <label class="field-label" for="f-price">Sale Price ($) <span class="req">*</span></label>
+            <input id="f-price" type="number" class="field-input" [(ngModel)]="form.price" name="price"
+              [attr.min]="0.01" [attr.step]="0.01" placeholder="279.00" />
+            @if (touched() && !form.price) {
+              <span class="field-msg">Price is required</span>
+            }
+          </div>
+          <div class="field" [ngClass]="{ 'field-error': touched() && !form.originalPrice }">
+            <label class="field-label" for="f-orig">Original Price ($) <span class="req">*</span></label>
+            <input id="f-orig" type="number" class="field-input" [(ngModel)]="form.originalPrice" name="originalPrice"
+              [attr.min]="0.01" [attr.step]="0.01" placeholder="349.00" />
+            @if (touched() && !form.originalPrice) {
+              <span class="field-msg">Original price is required</span>
+            }
+            @if (touched() && form.price && form.originalPrice && form.originalPrice < form.price) {
+              <span class="field-msg">Must be ≥ sale price</span>
+            }
+          </div>
+        </div>
+
+        <!-- Category + Badge row -->
+        <div class="field-row">
+          <div class="field" [ngClass]="{ 'field-error': touched() && !form.category }">
+            <label class="field-label" for="f-cat">Category <span class="req">*</span></label>
+            <select id="f-cat" class="field-input field-select" [(ngModel)]="form.category" name="category">
+              <option value="">Select…</option>
+              @for (c of categories; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+            @if (touched() && !form.category) {
+              <span class="field-msg">Category is required</span>
+            }
+          </div>
+          <div class="field">
+            <label class="field-label" for="f-badge">Badge (optional)</label>
+            <select id="f-badge" class="field-input field-select" [(ngModel)]="form.badge" name="badge">
+              @for (b of badges; track b) {
+                <option [value]="b">{{ b || '— None —' }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field" [ngClass]="{ 'field-error': touched() && !form.description }">
+          <label class="field-label" for="f-desc">Description <span class="req">*</span></label>
+          <textarea id="f-desc" class="field-input field-textarea" [(ngModel)]="form.description" name="description"
+            placeholder="Describe the product…" rows="3"></textarea>
+          @if (touched() && !form.description) {
+            <span class="field-msg">Description is required</span>
+          }
+        </div>
+
+        <!-- Image URL -->
+        <div class="field">
+          <label class="field-label" for="f-img">
+            Image URL
+            <span class="field-hint" appTooltip tooltipText="Leave blank for a default image">ⓘ</span>
+          </label>
+          <input id="f-img" type="url" class="field-input" [(ngModel)]="form.image" name="image"
+            [attr.placeholder]="'https://…'" />
+        </div>
+
+        <!-- Specs -->
+        <div class="field">
+          <label class="field-label" for="f-specs">
+            Key Specs
+            <span class="field-hint" appTooltip tooltipText="Comma-separated, e.g. 30-hr battery, USB-C">ⓘ</span>
+          </label>
+          <input id="f-specs" type="text" class="field-input" [(ngModel)]="form.specs" name="specs"
+            placeholder="30-hr battery, USB-C, Touch controls" />
+        </div>
+
+        <!-- Rating + Reviews row -->
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="f-rating">Rating (0–5)</label>
+            <input id="f-rating" type="number" class="field-input" [(ngModel)]="form.rating" name="rating"
+              [attr.min]="0" [attr.max]="5" [attr.step]="0.1" placeholder="4.5" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="f-reviews">Review count</label>
+            <input id="f-reviews" type="number" class="field-input" [(ngModel)]="form.reviews" name="reviews"
+              [attr.min]="0" placeholder="0" />
+          </div>
+        </div>
+
+        <!-- Form actions -->
+        <div class="ae-actions">
+          <button type="submit" class="btn-save"
+            [ngClass]="{ 'btn-save-disabled': touched() && !isValid() }"
+            [attr.aria-disabled]="touched() && !isValid()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ isEdit() ? 'Save Changes' : 'Create Product' }}
+          </button>
+          <button type="button" class="btn-discard" (click)="discard()">Discard</button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ── Live preview ───────────────────────────────────────────────── -->
+    <div class="ae-preview-panel">
+      <h2 class="preview-title">Live Preview</h2>
+      <div class="preview-card">
+        <div class="preview-img-wrap">
+          @if (form.image) {
+            <img [src]="form.image" alt="preview" class="preview-img" />
+          } @else {
+            <div class="preview-img-placeholder">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+          }
+          @if (form.badge) {
+            <span class="preview-badge" [ngClass]="'badge-' + form.badge.toLowerCase().replace(' ', '-')">{{ form.badge }}</span>
+          }
+          @if (form.price && form.originalPrice && form.originalPrice > form.price) {
+            <span class="card-discount">-{{ (((form.originalPrice - form.price) / form.originalPrice) * 100) | number:'1.0-0' }}%</span>
+          }
+        </div>
+        <div class="preview-body">
+          @if (form.category) { <span class="card-category">{{ form.category }}</span> }
+          <p class="card-name">{{ form.name || 'Product name' }}</p>
+          <div class="preview-prices">
+            @if (form.price) { <span class="price-now">${{ form.price }}</span> }
+            @if (form.originalPrice) { <span class="price-was">${{ form.originalPrice }}</span> }
+          </div>
+          @if (form.description) {
+            <p class="preview-desc">{{ form.description }}</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

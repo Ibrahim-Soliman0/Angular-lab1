@@ -1,0 +1,139 @@
+<div class="cart-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <div class="cart-header">
+    <div class="cart-title-row">
+      <h1 class="page-title">Your Cart</h1>
+      @if (cartService.itemCount() > 0) {
+        <span class="cart-count-pill">{{ cartService.itemCount() }} item(s)</span>
+      }
+    </div>
+    <a routerLink="/products" class="btn-continue-link">← Continue Shopping</a>
+  </div>
+
+  <!-- ── Empty state ────────────────────────────────────────────────── -->
+  @if (cartService.cartItems().length === 0) {
+    <div class="cart-empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <p class="cart-empty-msg">Your cart is empty</p>
+      <p class="cart-empty-sub">Browse products and add something!</p>
+      <a routerLink="/products" class="btn-shop">Browse Products</a>
+    </div>
+
+  } @else {
+    <div class="cart-layout">
+
+      <!-- ══ Items panel ═══════════════════════════════════════════════ -->
+      <div class="cart-items-panel">
+
+        <!-- Table header row -->
+        <div class="ct-head">
+          <span class="col-product">Product</span>
+          <span class="col-price">Unit Price</span>
+          <span class="col-qty">Count</span>
+          <span class="col-total">Item Total</span>
+          <span class="col-remove"></span>
+        </div>
+
+        <!-- Item rows -->
+        @for (item of cartService.cartItems(); track item.product.id) {
+          <div class="ct-row">
+
+            <!-- Product info -->
+            <div class="col-product ci-product">
+              <a [routerLink]="['/products', item.product.id]">
+                <img [src]="item.product.image" [alt]="item.product.name" class="ci-img" />
+              </a>
+              <div class="ci-meta">
+                <span class="ci-category">{{ item.product.category }}</span>
+                <a [routerLink]="['/products', item.product.id]" class="ci-name">{{ item.product.name }}</a>
+                <span class="ci-disc-tag">-{{ cartService.itemDiscountPct(item) }}% off</span>
+              </div>
+            </div>
+
+            <!-- Unit price -->
+            <div class="col-price ci-unit">
+              <span class="ci-price-now">${{ item.product.price }}</span>
+              <span class="ci-price-was">${{ item.product.originalPrice }}</span>
+            </div>
+
+            <!-- Count — text display (will be textbox in next lab) -->
+            <div class="col-qty ci-qty-wrap">
+              <button class="qty-btn" (click)="decrement(item)"
+                appTooltip tooltipText="Decrease">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <span class="qty-text">{{ item.quantity }}</span>
+              <button class="qty-btn" (click)="increment(item)"
+                appTooltip tooltipText="Increase">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+
+            <!-- Item total (price × count) -->
+            <div class="col-total ci-item-total">
+              <span class="item-total-val">${{ cartService.itemTotal(item) | number:'1.2-2' }}</span>
+              @if (item.quantity > 1) {
+                <span class="item-total-orig">${{ cartService.itemOriginalTotal(item) | number:'1.2-2' }}</span>
+              }
+            </div>
+
+            <!-- Remove -->
+            <div class="col-remove">
+              <button class="ci-remove" (click)="remove(item)"
+                appTooltip tooltipText="Remove from cart">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14H6L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+
+      <!-- ══ Order Summary sidebar ══════════════════════════════════════ -->
+      <div class="cart-summary">
+        <h2 class="summary-title">Order Summary</h2>
+
+        <div class="summary-rows">
+          <div class="summary-row">
+            <span>Price before discount</span>
+            <span>${{ cartService.originalSubtotal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row discount-row">
+            <span>Total discount</span>
+            <span>-${{ cartService.totalDiscount() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row grand-total-row">
+            <span>Grand Total</span>
+            <span>${{ cartService.subtotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        @if (cartService.totalDiscount() > 0) {
+          <div class="savings-banner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You're saving ${{ cartService.totalDiscount() | number:'1.2-2' }}
+          </div>
+        }
+
+        <button class="btn-checkout">
+          Proceed to Checkout
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+        <a routerLink="/products" class="btn-continue-sm">Continue Shopping</a>
+      </div>
+
+    </div>
+  }
+</div>

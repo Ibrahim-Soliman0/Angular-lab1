@@ -1,34 +1,47 @@
 <div class="app-shell">
+
+  <!-- ── Global loading overlay (fires while resolvers run) ──────────── -->
+  @if (navigating()) {
+    <app-loading-spinner [overlay]="true" message="Loading…" />
+  }
+
+  <!-- ── Sticky top bar ────────────────────────────────────────────────── -->
   <header class="top-bar">
     <div class="top-bar-inner">
-      <div class="brand">
+
+      <a class="brand" routerLink="/products">
         <span class="brand-mark">▸</span>
         <span class="brand-name">CIRCUIT</span>
         <span class="brand-sub">store</span>
-      </div>
+      </a>
+
       <nav class="top-nav">
-        <a class="nav-link" (click)="closeDetail()">All Products</a>
+        <a routerLink="/products" class="nav-link" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: false }">
+          Products
+        </a>
+        <a routerLink="/products/new" class="nav-link" routerLinkActive="nav-link-active">
+          + Add Product
+        </a>
       </nav>
-      <button class="cart-btn" (click)="toggleCart()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+
+      <a routerLink="/cart" class="cart-btn" routerLinkActive="cart-btn-active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
         Cart
         @if (cartService.itemCount() > 0) {
           <span class="cart-badge">{{ cartService.itemCount() }}</span>
         }
-      </button>
+      </a>
+
     </div>
   </header>
 
+  <!-- ── Routed page content ───────────────────────────────────────────── -->
   <main class="main-content">
-    @if (cartOpen()) {
-      <app-shopping-cart (close)="toggleCart()" />
-    } @else if (selectedProduct()) {
-      <app-product-detail
-        [product]="selectedProduct()!"
-        (back)="closeDetail()"
-      />
-    } @else {
-      <app-product-list (openProduct)="openDetail($event)" />
-    }
+    <router-outlet />
   </main>
+
 </div>
