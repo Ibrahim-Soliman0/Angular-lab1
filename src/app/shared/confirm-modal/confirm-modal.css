@@ -1,0 +1,81 @@
+/* ── Backdrop ─────────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, .45);
+  backdrop-filter: blur(3px);
+  z-index: 200;
+  animation: fade-in .15s ease;
+}
+
+/* ── Dialog ───────────────────────────────────────────────────────────── */
+.modal-dialog {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  width: min(460px, calc(100vw - 32px));
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  animation: slide-up .2s cubic-bezier(.16,1,.3,1);
+}
+
+/* ── Icon circle ──────────────────────────────────────────────────────── */
+.modal-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--line-soft); color: var(--ink-mute);
+}
+.modal-icon-danger {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+/* ── Text ─────────────────────────────────────────────────────────────── */
+.modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 700; color: var(--ink);
+  margin: 0;
+}
+.modal-body {
+  font-size: 15px; color: var(--ink-soft); line-height: 1.6;
+  margin: 0;
+}
+.modal-product-name { color: var(--ink); }
+
+/* ── Actions ──────────────────────────────────────────────────────────── */
+.modal-actions {
+  display: flex; gap: 10px; width: 100%; margin-top: 4px;
+}
+
+.btn-modal-cancel {
+  flex: 1; padding: 11px 20px;
+  border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600; color: var(--ink-soft);
+  transition: all .15s;
+}
+.btn-modal-cancel:hover { border-color: var(--ink-soft); color: var(--ink); background: var(--line-soft); }
+
+.btn-modal-confirm {
+  flex: 1; padding: 11px 20px;
+  background: var(--red); color: white;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: background .15s;
+}
+.btn-modal-confirm:hover { background: #b91c1c; }
+
+/* ── Animations ───────────────────────────────────────────────────────── */
+@keyframes fade-in  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-up {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 20px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}

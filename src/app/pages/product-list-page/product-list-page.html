@@ -1,6 +1,15 @@
 <section class="pl-page">
 
-  <!-- ── Page toolbar ──────────────────────────────────────────────────── -->
+  <!-- ── Delete confirmation modal ──────────────────────────────────── -->
+  @if (deleteTarget()) {
+    <app-confirm-modal
+      [productName]="deleteTarget()!.name"
+      (confirm)="confirmDelete()"
+      (cancel)="cancelDelete()"
+    />
+  }
+
+  <!-- ── Page toolbar ──────────────────────────────────────────────── -->
   <div class="pl-toolbar">
     <div class="pl-title-row">
       <h1 class="page-title">Products</h1>
@@ -8,9 +17,11 @@
     </div>
 
     <div class="pl-controls">
-      <!-- Search — attribute binding on placeholder & aria-label -->
+      <!-- Search with [placeholder] attribute binding -->
       <div class="search-wrap">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
         <input
           type="text"
           class="search-input"
@@ -20,8 +31,9 @@
         />
       </div>
 
-      <!-- Role switcher (demo) — ngStyle binding -->
-      <div class="role-switcher" [ngStyle]="{ 'border-color': currentRole === 'admin' ? 'var(--accent)' : 'var(--line)' }">
+      <!-- Role switcher — ngStyle binding -->
+      <div class="role-switcher"
+        [ngStyle]="{ 'border-color': currentRole === 'admin' ? 'var(--accent)' : 'var(--line)' }">
         <span class="role-label">Role:</span>
         <button
           [ngClass]="{ 'role-btn': true, 'role-active': currentRole === 'guest' }"
@@ -31,15 +43,17 @@
           (click)="setRole('admin')">Admin</button>
       </div>
 
-      <!-- Add product — structural *appIfRole directive -->
+      <!-- Add product — *appIfRole structural directive -->
       <a *appIfRole="'admin'" routerLink="/products/new" class="btn-add-product">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
         Add Product
       </a>
     </div>
   </div>
 
-  <!-- ── Category tabs ─────────────────────────────────────────────────── -->
+  <!-- ── Category tabs ─────────────────────────────────────────────── -->
   <div class="cat-tabs">
     @for (cat of productService.categories(); track cat) {
       <button
@@ -51,13 +65,16 @@
     }
   </div>
 
-  <!-- ── Product grid ───────────────────────────────────────────────────── -->
+  <!-- ── Product grid ──────────────────────────────────────────────── -->
   @if (filtered().length === 0) {
     <div class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
       <p>No products match <strong>"{{ searchQuery() }}"</strong></p>
       <button class="btn-clear" (click)="searchQuery.set(''); activeCategory.set('All')">Clear filters</button>
     </div>
+
   } @else {
     <div class="pl-grid">
       @for (product of filtered(); track product.id) {
@@ -70,7 +87,7 @@
           [attr.data-product-id]="product.id"
           [attr.aria-label]="'View details for ' + product.name">
 
-          <!-- Image + badges -->
+          <!-- Image -->
           <div class="card-img-wrap">
             <img
               [src]="product.image"
@@ -80,11 +97,14 @@
               [attr.title]="product.name"
             />
             @if (product.badge) {
-              <span class="card-badge" [ngClass]="'badge-' + product.badge.toLowerCase().replace(' ', '-')">
+              <span class="card-badge"
+                [ngClass]="'badge-' + product.badge.toLowerCase().replace(' ', '-')">
                 {{ product.badge }}
               </span>
             }
-            <span class="card-discount">{{ product.price | discount:product.originalPrice:'label' }}</span>
+            <span class="card-discount">
+              {{ product.price | discount:product.originalPrice:'label' }}
+            </span>
           </div>
 
           <!-- Body -->
@@ -92,11 +112,11 @@
             <span class="card-category">{{ product.category }}</span>
             <h2 class="card-name">{{ product.name }}</h2>
 
-            <!-- Star rating using ngClass -->
+            <!-- Stars — ngClass -->
             <div class="card-rating">
               <span class="stars">
                 @for (s of stars(product.rating); track $index) {
-                  <span [ngClass]="{ 'star': true, 'star-full': s === 'full', 'star-half': s === 'half', 'star-empty': s === 'empty' }">★</span>
+                  <span [ngClass]="{ 'star': true, 'star-full': s==='full', 'star-half': s==='half', 'star-empty': s==='empty' }">★</span>
                 }
               </span>
               <span class="rating-num">{{ product.rating }}</span>
@@ -107,10 +127,9 @@
             <div class="stock-row">
               <span class="stock-dot"
                 [ngStyle]="{
-                  'background-color': stock(product) <= 0 ? 'var(--red)' :
-                                      stock(product) <= 5 ? 'var(--amber)' : 'var(--green)'
-                }">
-              </span>
+                  'background-color': stock(product) <= 0  ? 'var(--red)' :
+                                      stock(product) <= 5  ? 'var(--amber)' : 'var(--green)'
+                }"></span>
               <span class="stock-label"
                 [ngStyle]="{
                   'color': stock(product) <= 0 ? 'var(--red)' :
@@ -120,7 +139,7 @@
               </span>
             </div>
 
-            <!-- Footer: price + actions -->
+            <!-- Footer -->
             <div class="card-footer">
               <div class="card-pricing">
                 <span class="price-now">${{ product.price }}</span>
@@ -132,30 +151,35 @@
                 @if (cartService.isInCart(product.id)) {
                   <button
                     class="btn-in-cart"
-                    appTooltip
-                    tooltipText="Add one more"
+                    appTooltip tooltipText="Add one more"
                     (click)="addToCart($event, product)">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                     {{ cartService.getQuantity(product.id) }}
                   </button>
                 } @else {
                   <button class="btn-add" (click)="addToCart($event, product)">Add</button>
                 }
 
-                <!-- Edit — visible to admin only (structural directive) -->
+                <!-- Edit — admin only -->
                 <a *appIfRole="'admin'"
-                   [routerLink]="['/products', product.id, 'edit']"
-                   class="btn-icon btn-edit"
-                   appTooltip tooltipText="Edit product">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  [routerLink]="['/products', product.id, 'edit']"
+                  class="btn-icon btn-edit"
+                  appTooltip tooltipText="Edit product">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
                 </a>
 
-                <!-- Delete — visible to admin only -->
+                <!-- Delete — admin only, opens modal -->
                 <button *appIfRole="'admin'"
-                   class="btn-icon btn-delete"
-                   appTooltip tooltipText="Delete product"
-                   (click)="deleteProduct($event, product.id)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  class="btn-icon btn-delete"
+                  appTooltip tooltipText="Delete product"
+                  (click)="openDeleteModal($event, product)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14H6L5 6"/>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -165,4 +189,5 @@
       }
     </div>
   }
+
 </section>

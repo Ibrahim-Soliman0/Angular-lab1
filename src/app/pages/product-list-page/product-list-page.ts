@@ -1,14 +1,15 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe, NgClass, NgStyle } from '@angular/common';
-import { ProductService } from '../../services/product';
+import { ProductService }     from '../../services/product';
 import { ProductCartService } from '../../services/product-cart';
-import { Product } from '../../models/product.model';
-import { DiscountPipe }      from '../../shared/pipes/discount-pipe';
-import { StockStatusPipe }   from '../../shared/pipes/stock-status-pipe';
+import { Product }            from '../../models/product.model';
+import { DiscountPipe }       from '../../shared/pipes/discount-pipe';
+import { StockStatusPipe }    from '../../shared/pipes/stock-status-pipe';
 import { HighlightDirective } from '../../shared/directives/highlight';
-import { TooltipDirective }  from '../../shared/directives/tooltip';
-import { IfRoleDirective }   from '../../shared/directives/if-role';
+import { TooltipDirective }   from '../../shared/directives/tooltip';
+import { IfRoleDirective }    from '../../shared/directives/if-role';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-product-list-page',
@@ -16,10 +17,11 @@ import { IfRoleDirective }   from '../../shared/directives/if-role';
   imports: [
     RouterLink, DecimalPipe, NgClass, NgStyle,
     DiscountPipe, StockStatusPipe,
-    HighlightDirective, TooltipDirective, IfRoleDirective
+    HighlightDirective, TooltipDirective, IfRoleDirective,
+    ConfirmModalComponent
   ],
   templateUrl: './product-list-page.html',
-  styleUrl: './product-list-page.css'
+  styleUrl:    './product-list-page.css'
 })
 export class ProductListPageComponent {
   private router = inject(Router);
@@ -29,7 +31,9 @@ export class ProductListPageComponent {
   activeCategory = signal('All');
   searchQuery    = signal('');
 
-  // Resolver already set productService.products(); filter reactively
+  // Delete modal state
+  deleteTarget = signal<Product | null>(null);
+
   filtered = computed(() => {
     const cat = this.activeCategory();
     const q   = this.searchQuery().toLowerCase().trim();
@@ -40,10 +44,7 @@ export class ProductListPageComponent {
     });
   });
 
-  // Derive a pseudo-stock value from review count (real app would have a stock field)
-  stock(p: Product): number {
-    return (p.reviews % 30) + 1;
-  }
+  stock(p: Product): number { return (p.reviews % 30) + 1; }
 
   stars(r: number): string[] {
     return Array.from({ length: 5 }, (_, i) =>
@@ -56,16 +57,25 @@ export class ProductListPageComponent {
     this.cartService.addToCart(p);
   }
 
-  deleteProduct(e: Event, id: number): void {
+  // Open the confirmation modal instead of using window.confirm
+  openDeleteModal(e: Event, product: Product): void {
     e.stopPropagation();
-    if (confirm('Delete this product?')) {
-      this.productService.deleteProduct(id);
-    }
+    e.preventDefault();
+    this.deleteTarget.set(product);
+  }
+
+  confirmDelete(): void {
+    const p = this.deleteTarget();
+    if (p) this.productService.deleteProduct(p.id);
+    this.deleteTarget.set(null);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget.set(null);
   }
 
   setRole(role: string): void {
     sessionStorage.setItem('userRole', role);
-    // Re-navigate so *appIfRole structural directive re-evaluates
     this.router.navigateByUrl('/', { skipLocationChange: true })
       .then(() => this.router.navigate(['/products']));
   }

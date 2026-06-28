@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DecimalPipe, NgClass, NgStyle } from '@angular/common';
 import { ProductCartService } from '../../services/product-cart';
@@ -9,6 +9,7 @@ import { StockStatusPipe }    from '../../shared/pipes/stock-status-pipe';
 import { HighlightDirective } from '../../shared/directives/highlight';
 import { TooltipDirective }   from '../../shared/directives/tooltip';
 import { IfRoleDirective }    from '../../shared/directives/if-role';
+import { ConfirmModalComponent } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-product-detail-page',
@@ -16,10 +17,11 @@ import { IfRoleDirective }    from '../../shared/directives/if-role';
   imports: [
     RouterLink, DecimalPipe, NgClass, NgStyle,
     DiscountPipe, StockStatusPipe,
-    HighlightDirective, TooltipDirective, IfRoleDirective
+    HighlightDirective, TooltipDirective, IfRoleDirective,
+    ConfirmModalComponent
   ],
   templateUrl: './product-detail-page.html',
-  styleUrl: './product-detail-page.css'
+  styleUrl:    './product-detail-page.css'
 })
 export class ProductDetailPageComponent {
   private route        = inject(ActivatedRoute);
@@ -27,12 +29,12 @@ export class ProductDetailPageComponent {
   cartService          = inject(ProductCartService);
   productService       = inject(ProductService);
 
-  // Product is injected from the resolver via route data
   product = computed<Product>(() => this.route.snapshot.data['product']);
 
-  stock(): number {
-    return (this.product().reviews % 30) + 1;
-  }
+  // Delete modal state
+  showDeleteModal = signal(false);
+
+  stock(): number { return (this.product().reviews % 30) + 1; }
 
   stars(r: number): string[] {
     return Array.from({ length: 5 }, (_, i) =>
@@ -40,14 +42,14 @@ export class ProductDetailPageComponent {
     );
   }
 
-  addToCart(): void {
-    this.cartService.addToCart(this.product());
-  }
+  addToCart(): void { this.cartService.addToCart(this.product()); }
 
-  deleteProduct(): void {
-    if (confirm('Delete this product permanently?')) {
-      this.productService.deleteProduct(this.product().id);
-      this.router.navigate(['/products']);
-    }
+  openDeleteModal(): void  { this.showDeleteModal.set(true); }
+  cancelDelete(): void     { this.showDeleteModal.set(false); }
+
+  confirmDelete(): void {
+    this.productService.deleteProduct(this.product().id);
+    this.showDeleteModal.set(false);
+    this.router.navigate(['/products']);
   }
 }

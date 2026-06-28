@@ -1,5 +1,6 @@
 <div class="ae-page">
 
+  <!-- ── Breadcrumb ─────────────────────────────────────────────────── -->
   <nav class="ae-breadcrumb">
     <a routerLink="/products" class="bc-link">Products</a>
     <span class="bc-sep">›</span>
@@ -12,168 +13,362 @@
     }
   </nav>
 
-  <!-- Success banner -->
+  <!-- ── Success banner ─────────────────────────────────────────────── -->
   @if (saved()) {
     <div class="save-banner">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
       Product {{ isEdit() ? 'updated' : 'created' }} successfully! Redirecting…
     </div>
   }
 
   <div class="ae-layout">
-    <!-- ── Form ──────────────────────────────────────────────────────── -->
+
+    <!-- ════════════════════════════════════════════════════════════════
+         REACTIVE FORM
+         ════════════════════════════════════════════════════════════════ -->
     <div class="ae-form-panel">
       <h1 class="ae-title">{{ isEdit() ? 'Edit Product' : 'Add New Product' }}</h1>
 
-      <form class="ae-form" (ngSubmit)="submit()">
+      <!-- Form status badge -->
+      <div class="form-status-row">
+        <span class="form-status-badge"
+          [ngClass]="{
+            'status-valid':   form.valid,
+            'status-invalid': form.invalid && (form.dirty || submitTried()),
+            'status-pristine': form.pristine && !submitTried()
+          }">
+          @if (form.pristine && !submitTried()) { ✎ Fill in all required fields }
+          @else if (form.valid)                  { ✓ Form is valid }
+          @else                                  { ✕ {{ form.invalid ? 'Fix the errors below' : '' }} }
+        </span>
+      </div>
 
-        <!-- Name -->
-        <div class="field" [ngClass]="{ 'field-error': touched() && !form.name }">
-          <label class="field-label" for="f-name">Product Name <span class="req">*</span></label>
-          <input id="f-name" type="text" class="field-input" [(ngModel)]="form.name" name="name"
+      <form class="ae-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+        <!-- ── Product name ─────────────────────────────────────────── -->
+        <div class="field" [ngClass]="{ 'field-error': showError(name) }">
+          <label class="field-label" for="f-name">
+            Product Name <span class="req">*</span>
+          </label>
+          <input
+            id="f-name"
+            type="text"
+            class="field-input"
+            formControlName="name"
             [attr.placeholder]="'e.g. Sony WH-1000XM5'"
-            [attr.aria-required]="true" />
-          @if (touched() && !form.name) {
-            <span class="field-msg">Name is required</span>
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="showError(name)"
+            appHighlight
+            [highlightColor]="showError(name) ? '#fff1f2' : '#f8faff'"
+          />
+          @if (showError(name)) {
+            <span class="field-msg">
+              @if (name.hasError('required'))     { Name is required. }
+              @if (name.hasError('minlength'))    { At least 3 characters required. }
+              @if (name.hasError('maxlength'))    { Maximum 80 characters. }
+              @if (name.hasError('digitsOnly'))   { Name cannot be numbers only. }
+            </span>
           }
         </div>
 
-        <!-- Price row -->
+        <!-- ── Price row ────────────────────────────────────────────── -->
         <div class="field-row">
-          <div class="field" [ngClass]="{ 'field-error': touched() && !form.price }">
+
+          <div class="field" [ngClass]="{ 'field-error': showError(price) }">
             <label class="field-label" for="f-price">Sale Price ($) <span class="req">*</span></label>
-            <input id="f-price" type="number" class="field-input" [(ngModel)]="form.price" name="price"
-              [attr.min]="0.01" [attr.step]="0.01" placeholder="279.00" />
-            @if (touched() && !form.price) {
-              <span class="field-msg">Price is required</span>
+            <input
+              id="f-price"
+              type="number"
+              class="field-input"
+              formControlName="price"
+              [attr.min]="0.01"
+              [attr.step]="0.01"
+              placeholder="279.00"
+              [attr.aria-invalid]="showError(price)"
+            />
+            @if (showError(price)) {
+              <span class="field-msg">
+                @if (price.hasError('required')) { Price is required. }
+                @if (price.hasError('min'))      { Must be greater than 0. }
+              </span>
             }
           </div>
-          <div class="field" [ngClass]="{ 'field-error': touched() && !form.originalPrice }">
-            <label class="field-label" for="f-orig">Original Price ($) <span class="req">*</span></label>
-            <input id="f-orig" type="number" class="field-input" [(ngModel)]="form.originalPrice" name="originalPrice"
-              [attr.min]="0.01" [attr.step]="0.01" placeholder="349.00" />
-            @if (touched() && !form.originalPrice) {
-              <span class="field-msg">Original price is required</span>
+
+          <div class="field" [ngClass]="{ 'field-error': showError(originalPrice) || (form.hasError('originalLessThanPrice') && (form.dirty || submitTried())) }">
+            <label class="field-label" for="f-orig">
+              Original Price ($) <span class="req">*</span>
+              <span class="field-hint" appTooltip tooltipText="Must be ≥ the sale price">ⓘ</span>
+            </label>
+            <input
+              id="f-orig"
+              type="number"
+              class="field-input"
+              formControlName="originalPrice"
+              [attr.min]="0.01"
+              [attr.step]="0.01"
+              placeholder="349.00"
+              [attr.aria-invalid]="showError(originalPrice)"
+            />
+            @if (showError(originalPrice)) {
+              <span class="field-msg">
+                @if (originalPrice.hasError('required')) { Original price is required. }
+                @if (originalPrice.hasError('min'))      { Must be greater than 0. }
+              </span>
             }
-            @if (touched() && form.price && form.originalPrice && form.originalPrice < form.price) {
-              <span class="field-msg">Must be ≥ sale price</span>
+            @if (form.hasError('originalLessThanPrice') && (form.dirty || submitTried())) {
+              <span class="field-msg">Original price must be ≥ sale price.</span>
             }
           </div>
+
         </div>
 
-        <!-- Category + Badge row -->
+        <!-- ── Category + Badge row ──────────────────────────────────── -->
         <div class="field-row">
-          <div class="field" [ngClass]="{ 'field-error': touched() && !form.category }">
+
+          <div class="field" [ngClass]="{ 'field-error': showError(category) }">
             <label class="field-label" for="f-cat">Category <span class="req">*</span></label>
-            <select id="f-cat" class="field-input field-select" [(ngModel)]="form.category" name="category">
-              <option value="">Select…</option>
+            <select id="f-cat" class="field-input field-select" formControlName="category"
+              [attr.aria-invalid]="showError(category)">
+              <option value="">Select a category…</option>
               @for (c of categories; track c) {
                 <option [value]="c">{{ c }}</option>
               }
             </select>
-            @if (touched() && !form.category) {
-              <span class="field-msg">Category is required</span>
+            @if (showError(category)) {
+              <span class="field-msg">Category is required.</span>
             }
           </div>
+
           <div class="field">
-            <label class="field-label" for="f-badge">Badge (optional)</label>
-            <select id="f-badge" class="field-input field-select" [(ngModel)]="form.badge" name="badge">
+            <label class="field-label" for="f-badge">Badge <span class="optional">(optional)</span></label>
+            <select id="f-badge" class="field-input field-select" formControlName="badge">
               @for (b of badges; track b) {
                 <option [value]="b">{{ b || '— None —' }}</option>
               }
             </select>
           </div>
+
         </div>
 
-        <!-- Description -->
-        <div class="field" [ngClass]="{ 'field-error': touched() && !form.description }">
+        <!-- ── Description ──────────────────────────────────────────── -->
+        <div class="field" [ngClass]="{ 'field-error': showError(description) }">
           <label class="field-label" for="f-desc">Description <span class="req">*</span></label>
-          <textarea id="f-desc" class="field-input field-textarea" [(ngModel)]="form.description" name="description"
-            placeholder="Describe the product…" rows="3"></textarea>
-          @if (touched() && !form.description) {
-            <span class="field-msg">Description is required</span>
+          <textarea
+            id="f-desc"
+            class="field-input field-textarea"
+            formControlName="description"
+            placeholder="Describe the product clearly…"
+            rows="3"
+            [attr.aria-invalid]="showError(description)"
+          ></textarea>
+          @if (showError(description)) {
+            <span class="field-msg">
+              @if (description.hasError('required'))   { Description is required. }
+              @if (description.hasError('minlength'))  { At least 10 characters required. }
+            </span>
           }
+          <!-- Live character counter -->
+          <span class="char-counter"
+            [ngClass]="{ 'counter-warn': description.value?.length > 200 }">
+            {{ description.value?.length ?? 0 }} chars
+          </span>
         </div>
 
-        <!-- Image URL -->
+        <!-- ── Image URL ─────────────────────────────────────────────── -->
         <div class="field">
           <label class="field-label" for="f-img">
             Image URL
-            <span class="field-hint" appTooltip tooltipText="Leave blank for a default image">ⓘ</span>
+            <span class="field-hint" appTooltip tooltipText="Leave blank to use a default image">ⓘ</span>
           </label>
-          <input id="f-img" type="url" class="field-input" [(ngModel)]="form.image" name="image"
-            [attr.placeholder]="'https://…'" />
+          <input
+            id="f-img"
+            type="url"
+            class="field-input"
+            formControlName="image"
+            placeholder="https://…"
+          />
         </div>
 
-        <!-- Specs -->
+        <!-- ── Specs FormArray ───────────────────────────────────────── -->
         <div class="field">
-          <label class="field-label" for="f-specs">
-            Key Specs
-            <span class="field-hint" appTooltip tooltipText="Comma-separated, e.g. 30-hr battery, USB-C">ⓘ</span>
-          </label>
-          <input id="f-specs" type="text" class="field-input" [(ngModel)]="form.specs" name="specs"
-            placeholder="30-hr battery, USB-C, Touch controls" />
+          <div class="specs-header">
+            <label class="field-label">
+              Key Specs
+              <span class="field-hint" appTooltip tooltipText="Each spec appears as a tag on the product card">ⓘ</span>
+            </label>
+            <button type="button" class="btn-add-spec" (click)="addSpec()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add spec
+            </button>
+          </div>
+
+          <div class="specs-list" formArrayName="specs">
+            @for (ctrl of specsArray.controls; track $index) {
+              <div class="spec-row">
+                <input
+                  type="text"
+                  class="field-input spec-input"
+                  [formControlName]="$index"
+                  [ngClass]="{ 'field-error-border': ctrl.invalid && (ctrl.dirty || ctrl.touched) }"
+                  placeholder="e.g. 30-hr battery"
+                />
+                <button
+                  type="button"
+                  class="btn-remove-spec"
+                  (click)="removeSpec($index)"
+                  appTooltip tooltipText="Remove this spec">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            }
+            @if (specsArray.length === 0) {
+              <p class="specs-empty">No specs added yet — click "Add spec" to start.</p>
+            }
+          </div>
         </div>
 
-        <!-- Rating + Reviews row -->
+        <!-- ── Rating + Reviews ──────────────────────────────────────── -->
         <div class="field-row">
-          <div class="field">
-            <label class="field-label" for="f-rating">Rating (0–5)</label>
-            <input id="f-rating" type="number" class="field-input" [(ngModel)]="form.rating" name="rating"
-              [attr.min]="0" [attr.max]="5" [attr.step]="0.1" placeholder="4.5" />
+
+          <div class="field" [ngClass]="{ 'field-error': showError(rating) }">
+            <label class="field-label" for="f-rating">Rating (0 – 5)</label>
+            <input
+              id="f-rating"
+              type="number"
+              class="field-input"
+              formControlName="rating"
+              [attr.min]="0"
+              [attr.max]="5"
+              [attr.step]="0.1"
+              placeholder="4.5"
+            />
+            @if (showError(rating)) {
+              <span class="field-msg">Rating must be between 0 and 5.</span>
+            }
           </div>
-          <div class="field">
-            <label class="field-label" for="f-reviews">Review count</label>
-            <input id="f-reviews" type="number" class="field-input" [(ngModel)]="form.reviews" name="reviews"
-              [attr.min]="0" placeholder="0" />
+
+          <div class="field" [ngClass]="{ 'field-error': showError(reviews) }">
+            <label class="field-label" for="f-reviews">Review Count</label>
+            <input
+              id="f-reviews"
+              type="number"
+              class="field-input"
+              formControlName="reviews"
+              [attr.min]="0"
+              placeholder="0"
+            />
+            @if (showError(reviews)) {
+              <span class="field-msg">Must be 0 or more.</span>
+            }
           </div>
+
         </div>
 
-        <!-- Form actions -->
+        <!-- ── Form actions ──────────────────────────────────────────── -->
         <div class="ae-actions">
-          <button type="submit" class="btn-save"
-            [ngClass]="{ 'btn-save-disabled': touched() && !isValid() }"
-            [attr.aria-disabled]="touched() && !isValid()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <button
+            type="submit"
+            class="btn-save"
+            [ngClass]="{ 'btn-save-disabled': form.invalid && submitTried() }"
+            [attr.aria-disabled]="form.invalid && submitTried()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
             {{ isEdit() ? 'Save Changes' : 'Create Product' }}
           </button>
-          <button type="button" class="btn-discard" (click)="discard()">Discard</button>
+          <button type="button" class="btn-discard" (click)="discard()">
+            Discard
+          </button>
+        </div>
+
+        <!-- ── Debug: form status (dev helper) ─────────────────────── -->
+        <div class="form-debug">
+          <span>Status: <strong>{{ form.status }}</strong></span>
+          <span>Dirty: <strong>{{ form.dirty }}</strong></span>
+          <span>Touched: <strong>{{ form.touched }}</strong></span>
         </div>
 
       </form>
     </div>
 
-    <!-- ── Live preview ───────────────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════════
+         LIVE PREVIEW  (updated on every valueChanges tick)
+         ════════════════════════════════════════════════════════════════ -->
     <div class="ae-preview-panel">
-      <h2 class="preview-title">Live Preview</h2>
+      <p class="preview-title">Live Preview</p>
       <div class="preview-card">
+
+        <!-- Image area -->
         <div class="preview-img-wrap">
-          @if (form.image) {
-            <img [src]="form.image" alt="preview" class="preview-img" />
+          @if (preview().image) {
+            <img [src]="preview().image" alt="preview" class="preview-img" />
           } @else {
             <div class="preview-img-placeholder">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
             </div>
           }
-          @if (form.badge) {
-            <span class="preview-badge" [ngClass]="'badge-' + form.badge.toLowerCase().replace(' ', '-')">{{ form.badge }}</span>
+          @if (preview().badge) {
+            <span class="preview-badge"
+              [ngClass]="'badge-' + preview().badge!.toLowerCase().replace(' ', '-')">
+              {{ preview().badge }}
+            </span>
           }
-          @if (form.price && form.originalPrice && form.originalPrice > form.price) {
-            <span class="card-discount">-{{ (((form.originalPrice - form.price) / form.originalPrice) * 100) | number:'1.0-0' }}%</span>
+          @if (previewDiscount() > 0) {
+            <span class="card-discount">-{{ previewDiscount() }}%</span>
           }
         </div>
+
+        <!-- Text body -->
         <div class="preview-body">
-          @if (form.category) { <span class="card-category">{{ form.category }}</span> }
-          <p class="card-name">{{ form.name || 'Product name' }}</p>
+          @if (preview().category) {
+            <span class="card-category">{{ preview().category }}</span>
+          }
+          <p class="card-name">{{ preview().name || 'Product name' }}</p>
           <div class="preview-prices">
-            @if (form.price) { <span class="price-now">${{ form.price }}</span> }
-            @if (form.originalPrice) { <span class="price-was">${{ form.originalPrice }}</span> }
+            @if (preview().price) {
+              <span class="price-now">${{ preview().price }}</span>
+            }
+            @if (preview().originalPrice) {
+              <span class="price-was">${{ preview().originalPrice }}</span>
+            }
           </div>
-          @if (form.description) {
-            <p class="preview-desc">{{ form.description }}</p>
+          @if (preview().description) {
+            <p class="preview-desc">{{ preview().description }}</p>
+          }
+          <!-- Show specs from FormArray -->
+          @if (specsArray.length > 0) {
+            <div class="preview-specs">
+              @for (ctrl of specsArray.controls; track $index) {
+                @if (ctrl.value) {
+                  <span class="preview-spec-tag">{{ ctrl.value }}</span>
+                }
+              }
+            </div>
           }
         </div>
       </div>
+
+      <!-- Validation summary -->
+      @if (form.invalid && submitTried()) {
+        <div class="validation-summary">
+          <p class="vs-title">Please fix these issues:</p>
+          <ul class="vs-list">
+            @if (name.errors)          { <li>Product name: {{ name.errors | json }}</li> }
+            @if (price.errors)         { <li>Price: {{ price.errors | json }}</li> }
+            @if (originalPrice.errors) { <li>Original price: {{ originalPrice.errors | json }}</li> }
+            @if (category.errors)      { <li>Category is required</li> }
+            @if (description.errors)   { <li>Description: {{ description.errors | json }}</li> }
+            @if (form.hasError('originalLessThanPrice')) { <li>Original price must be ≥ sale price</li> }
+          </ul>
+        </div>
+      }
     </div>
+
   </div>
 </div>

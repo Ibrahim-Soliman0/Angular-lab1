@@ -1,4 +1,15 @@
 <div class="pd-page">
+
+  <!-- ── Delete confirmation modal ──────────────────────────────────── -->
+  @if (showDeleteModal()) {
+    <app-confirm-modal
+      [productName]="product().name"
+      (confirm)="confirmDelete()"
+      (cancel)="cancelDelete()"
+    />
+  }
+
+  <!-- ── Breadcrumb ─────────────────────────────────────────────────── -->
   <nav class="pd-breadcrumb">
     <a routerLink="/products" class="bc-link">Products</a>
     <span class="bc-sep">›</span>
@@ -10,7 +21,7 @@
     <!-- ── Image panel ───────────────────────────────────────────────── -->
     <div class="pd-img-panel">
       <div class="pd-img-wrap">
-        <!-- attribute binding: title, alt, src -->
+        <!-- Attribute bindings: src, alt, title -->
         <img
           [src]="product().image"
           [alt]="product().name"
@@ -25,16 +36,22 @@
         }
       </div>
 
-      <!-- Admin actions below image -->
+      <!-- Admin actions below image — open modal, navigate to edit -->
       <div class="pd-admin-actions">
         <a *appIfRole="'admin'"
-           [routerLink]="['/products', product().id, 'edit']"
-           class="btn-edit-full">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          [routerLink]="['/products', product().id, 'edit']"
+          class="btn-edit-full">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
           Edit Product
         </a>
-        <button *appIfRole="'admin'" class="btn-delete-full" (click)="deleteProduct()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        <button *appIfRole="'admin'" class="btn-delete-full" (click)="openDeleteModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6"/>
+          </svg>
           Delete
         </button>
       </div>
@@ -56,20 +73,24 @@
         <span class="pd-rating-reviews">{{ product().reviews | number }} reviews</span>
       </div>
 
-      <!-- Price block -->
+      <!-- Price block — custom DiscountPipe -->
       <div class="pd-price-block">
         <div class="pd-prices">
           <span class="pd-price-now">${{ product().price }}</span>
           <span class="pd-price-was">${{ product().originalPrice }}</span>
-          <span class="pd-disc-pill">{{ product().price | discount:product().originalPrice:'label' }}</span>
+          <span class="pd-disc-pill">
+            {{ product().price | discount:product().originalPrice:'label' }}
+          </span>
         </div>
         <p class="pd-savings">{{ product().price | discount:product().originalPrice:'saved' }}</p>
       </div>
 
-      <!-- Stock — ngStyle for color + custom pipe -->
+      <!-- Stock — ngStyle + StockStatusPipe -->
       <div class="pd-stock"
-        [ngStyle]="{ 'color': stock() <= 0 ? 'var(--red)' : stock() <= 5 ? 'var(--amber)' : 'var(--green)',
-                     'background': stock() <= 0 ? 'var(--red-soft)' : stock() <= 5 ? 'var(--amber-soft)' : 'var(--green-soft)' }">
+        [ngStyle]="{
+          'color':      stock() <= 0 ? 'var(--red)' : stock() <= 5 ? 'var(--amber)' : 'var(--green)',
+          'background': stock() <= 0 ? 'var(--red-soft)' : stock() <= 5 ? 'var(--amber-soft)' : 'var(--green-soft)'
+        }">
         <span class="stock-icon">{{ stock() <= 0 ? '✕' : stock() <= 5 ? '!' : '✓' }}</span>
         {{ stock() | stockStatus }}
       </div>
@@ -83,7 +104,9 @@
           <div class="pd-specs-grid">
             @for (spec of product().specs; track $index) {
               <div class="spec-chip" appHighlight highlightColor="#eff6ff">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
                 {{ spec }}
               </div>
             }
@@ -95,18 +118,31 @@
       <div class="pd-cart-actions">
         @if (cartService.isInCart(product().id)) {
           <div class="pd-in-cart">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
             In cart — {{ cartService.getQuantity(product().id) }} unit(s)
           </div>
-          <button class="btn-add-more" appTooltip tooltipText="Adds one more to cart" (click)="addToCart()">+ Add one more</button>
+          <button class="btn-add-more"
+            appTooltip tooltipText="Adds one more to your cart"
+            (click)="addToCart()">
+            + Add one more
+          </button>
         } @else {
           <button class="btn-add-to-cart" (click)="addToCart()">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
             Add to Cart
           </button>
         }
-        <a routerLink="/cart" class="btn-view-cart">View Cart ({{ cartService.itemCount() }})</a>
+        <a routerLink="/cart" class="btn-view-cart">
+          View Cart ({{ cartService.itemCount() }})
+        </a>
       </div>
     </div>
+
   </div>
 </div>
